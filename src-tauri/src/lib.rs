@@ -4,6 +4,7 @@ mod overlay;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::TrayIconBuilder;
 use tauri::{App, AppHandle};
+use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 const MENU_TRIGGER: &str = "trigger";
 const MENU_QUIT: &str = "quit";
@@ -12,8 +13,20 @@ const MENU_QUIT: &str = "quit";
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(
+            tauri_plugin_global_shortcut::Builder::new()
+                .with_handler(|app, _shortcut, event| {
+                    if event.state == ShortcutState::Pressed {
+                        if let Err(e) = overlay::show_overlay(app) {
+                            eprintln!("show_overlay failed: {e}");
+                        }
+                    }
+                })
+                .build(),
+        )
         .setup(|app| {
             setup_tray(app)?;
+            setup_shortcut(app)?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![commands::hide_overlay])
@@ -30,6 +43,14 @@ fn setup_tray(app: &mut App) -> tauri::Result<()> {
         .menu(&menu)
         .on_menu_event(handle_menu_event)
         .build(app)?;
+    Ok(())
+}
+
+fn setup_shortcut(app: &mut App) -> tauri::Result<()> {
+    let sc = Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyH);
+    app.global_shortcut()
+        .register(sc)
+        .map_err(|e| tauri::Error::Anyhow(Box::new(std::io::Error::other(e.to_string())).into()))?;
     Ok(())
 }
 

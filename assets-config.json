@@ -1,0 +1,9 @@
+{
+  "animation": "css-sprites",
+  "audio": {
+    "calm": "/src/audio/calm.mp3",
+    "annoying": "/src/audio/annoying.mp3",
+    "switchAtMs": 2500
+  },
+  "shortcut": "CmdOrCtrl+Shift+H"
+}
