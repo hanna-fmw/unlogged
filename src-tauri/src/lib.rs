@@ -3,6 +3,7 @@ mod harvest;
 mod meeting;
 mod overlay;
 mod state;
+mod trigger;
 
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::TrayIconBuilder;
