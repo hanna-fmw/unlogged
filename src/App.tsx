@@ -1,4 +1,15 @@
+import { useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
+
 export default function App() {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") invoke("hide_overlay");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   return (
     <div
       style={{
@@ -12,7 +23,7 @@ export default function App() {
         fontFamily: "system-ui",
       }}
     >
-      <h1 style={{ fontSize: 64 }}>Time Report Reminder</h1>
+      <h1 style={{ fontSize: 64 }}>Time Report Reminder (press Esc)</h1>
     </div>
   );
 }
