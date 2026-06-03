@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getActiveAnimation } from "./animations";
+import ReportButton from "./overlay/ReportButton";
 
 const mod = getActiveAnimation();
 
@@ -29,7 +30,7 @@ export default function App() {
       }}
     >
       <mod.Component />
-      <h1 style={{ fontSize: 48 }}>REPORT YOUR TIME</h1>
+      <ReportButton />
     </div>
   );
 }

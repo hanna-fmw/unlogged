@@ -33,7 +33,7 @@ pub fn run() {
             setup_shortcut(app)?;
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![commands::hide_overlay])
+        .invoke_handler(tauri::generate_handler![commands::hide_overlay, commands::report_time])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
