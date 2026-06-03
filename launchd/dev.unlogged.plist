@@ -5,7 +5,7 @@
   <key>Label</key><string>dev.unlogged</string>
   <key>ProgramArguments</key>
   <array>
-    <string>/Applications/TimeReportReminder.app/Contents/MacOS/time-report-reminder</string>
+    <string>/Applications/TimeReportReminder.app/Contents/MacOS/tauri-app</string>
     <string>--scheduled</string>
   </array>
   <key>StartCalendarInterval</key>
