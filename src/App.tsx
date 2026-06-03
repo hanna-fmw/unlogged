@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
 import { getActiveAnimation } from "./animations";
 import { AudioController } from "./audio/AudioController";
+import { hideOverlay } from "./lib/tauri";
 import ReportButton from "./overlay/ReportButton";
+import MissingCounter from "./overlay/MissingCounter";
+import SnoozeButton from "./overlay/SnoozeButton";
 
 const mod = getActiveAnimation();
 
@@ -26,7 +28,7 @@ export default function App() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         audio.stop();
-        void invoke("hide_overlay").catch(console.error);
+        void hideOverlay().catch(console.error);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -47,14 +49,19 @@ export default function App() {
         WebkitBackdropFilter: "blur(20px) saturate(160%)",
         background: "rgba(255,255,255,0.18)",
         display: "grid",
-        gridTemplateRows: "1fr auto",
+        gridTemplateRows: "auto 1fr auto",
         placeItems: "center",
         padding: 48,
+        gap: 24,
         fontFamily: "system-ui",
       }}
     >
-      <mod.Component key={runId} />
-      <ReportButton />
+      <MissingCounter key={`counter-${runId}`} />
+      <mod.Component key={`anim-${runId}`} />
+      <div style={{ display: "grid", placeItems: "center", gap: 12 }}>
+        <ReportButton />
+        <SnoozeButton />
+      </div>
     </div>
   );
 }

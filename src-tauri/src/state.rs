@@ -1,5 +1,8 @@
 use std::path::PathBuf;
 use std::fs;
+use std::io::Write;
+#[cfg(unix)]
+use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -27,9 +30,16 @@ impl AppState {
     pub fn save(&self, path: &PathBuf) -> std::io::Result<()> {
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;
+            #[cfg(unix)]
+            fs::set_permissions(parent, fs::Permissions::from_mode(0o700))?;
         }
         let s = serde_json::to_string_pretty(self).unwrap();
-        fs::write(path, s)
+        let mut opts = fs::OpenOptions::new();
+        opts.write(true).create(true).truncate(true);
+        #[cfg(unix)]
+        opts.mode(0o600);
+        let mut f = opts.open(path)?;
+        f.write_all(s.as_bytes())
     }
 
     pub fn is_snoozed(&self, now: DateTime<Utc>) -> bool {

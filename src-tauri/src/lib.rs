@@ -35,9 +35,16 @@ pub fn run() {
             app.set_activation_policy(ActivationPolicy::Accessory);
             setup_tray(app)?;
             setup_shortcut(app)?;
+            setup_scheduled(app);
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![commands::hide_overlay, commands::report_time])
+        .invoke_handler(tauri::generate_handler![
+            commands::hide_overlay,
+            commands::report_time,
+            commands::snooze,
+            commands::set_harvest_credentials,
+            commands::missing_days,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -60,6 +67,39 @@ fn setup_shortcut(app: &mut App) -> tauri::Result<()> {
         .register(sc)
         .map_err(|e| tauri::Error::Anyhow(Box::new(std::io::Error::other(e.to_string())).into()))?;
     Ok(())
+}
+
+fn setup_scheduled(app: &mut App) {
+    let args: Vec<String> = std::env::args().collect();
+    if !args.iter().any(|a| a == "--scheduled") {
+        return;
+    }
+    let app_handle = app.handle().clone();
+    tauri::async_runtime::spawn(async move {
+        let path = commands::state_path_handle(&app_handle);
+        let s = state::AppState::load(&path);
+
+        let in_meeting = meeting::likely_in_meeting();
+        let missing = match (&s.harvest_token, &s.harvest_account_id) {
+            (Some(t), Some(a)) => {
+                let client = harvest::HarvestClient::new(t.clone(), a.clone());
+                client.missing_weekdays_this_month().await.unwrap_or(1)
+            }
+            _ => 1,
+        };
+        let decision = trigger::should_trigger(in_meeting, &s, missing, chrono::Utc::now());
+        match decision {
+            trigger::Decision::Trigger => {
+                if let Err(e) = overlay::show_overlay(&app_handle) {
+                    eprintln!("show_overlay failed: {e}");
+                }
+            }
+            trigger::Decision::Skip(reason) => {
+                eprintln!("scheduled trigger skipped: {:?}", reason);
+                app_handle.exit(0);
+            }
+        }
+    });
 }
 
 fn handle_menu_event(app: &AppHandle, event: tauri::menu::MenuEvent) {
