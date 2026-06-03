@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.DS_Store
+src-tauri/target/
+src-tauri/gen/
+.env
+.env.local
+CLAUDE.md
+.claude/
+CLEAN-SLATE.md
