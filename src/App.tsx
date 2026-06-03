@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 export default function App() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") invoke("hide_overlay");
+      if (e.key === "Escape") void invoke("hide_overlay").catch(console.error);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
