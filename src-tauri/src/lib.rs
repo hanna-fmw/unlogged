@@ -1,5 +1,6 @@
 mod commands;
 mod overlay;
+mod state;
 
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::TrayIconBuilder;
