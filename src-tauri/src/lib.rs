@@ -3,6 +3,8 @@ mod overlay;
 
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::TrayIconBuilder;
+#[cfg(target_os = "macos")]
+use tauri::ActivationPolicy;
 use tauri::{App, AppHandle};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
@@ -25,6 +27,8 @@ pub fn run() {
                 .build(),
         )
         .setup(|app| {
+            #[cfg(target_os = "macos")]
+            app.set_activation_policy(ActivationPolicy::Accessory);
             setup_tray(app)?;
             setup_shortcut(app)?;
             Ok(())
