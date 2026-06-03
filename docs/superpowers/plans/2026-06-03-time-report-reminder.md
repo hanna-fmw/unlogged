@@ -1,5 +1,7 @@
 # Time Report Reminder Implementation Plan
 
+> **Progress (as of 2026-06-03):** Stages 1–6 complete and verified on `feat/initial-design`. Next session: start at Stage 7 — `should_trigger` logic + Harvest + state.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build a Tauri v2 macOS desktop app that takes over the screen on a schedule and on demand with a comedic frosted-glass overlay, a big pulsing "REPORT YOUR TIME" button, and a Harvest "N DAYS MISSING" counter.
