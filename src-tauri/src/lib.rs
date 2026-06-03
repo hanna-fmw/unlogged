@@ -1,5 +1,6 @@
 mod commands;
 mod harvest;
+mod meeting;
 mod overlay;
 mod state;
 
