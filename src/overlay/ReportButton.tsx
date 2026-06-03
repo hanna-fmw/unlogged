@@ -1,9 +1,16 @@
 import { invoke } from "@tauri-apps/api/core";
+import config from "../../assets-config.json";
 
 export default function ReportButton() {
+  const onClick = () =>
+    void invoke("report_time", {
+      url: config.harvestUrl,
+      chromeProfile: config.chromeProfile,
+    }).catch(console.error);
+
   return (
     <button
-      onClick={() => void invoke("report_time").catch(console.error)}
+      onClick={onClick}
       style={{
         fontSize: 56,
         fontWeight: 900,

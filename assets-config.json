@@ -5,5 +5,7 @@
     "annoying": "/src/audio/annoying.mp3",
     "switchAtMs": 2500
   },
-  "shortcut": "CmdOrCtrl+Shift+H"
+  "shortcut": "CmdOrCtrl+Shift+H",
+  "harvestUrl": "https://leadfront.harvestapp.com/time",
+  "chromeProfile": "Default"
 }

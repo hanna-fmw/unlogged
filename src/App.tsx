@@ -1,17 +1,41 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getActiveAnimation } from "./animations";
+import { AudioController } from "./audio/AudioController";
 import ReportButton from "./overlay/ReportButton";
 
 const mod = getActiveAnimation();
 
 export default function App() {
+  const [runId, setRunId] = useState(0);
+
   useEffect(() => {
+    const audio = new AudioController(mod.audio);
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        setRunId((n) => n + 1);
+        audio.start();
+      } else {
+        audio.stop();
+      }
+    };
+    onVisibility();
+    document.addEventListener("visibilitychange", onVisibility);
+
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") void invoke("hide_overlay").catch(console.error);
+      if (e.key === "Escape") {
+        audio.stop();
+        void invoke("hide_overlay").catch(console.error);
+      }
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("keydown", onKey);
+      audio.stop();
+    };
   }, []);
 
   return (
@@ -29,7 +53,7 @@ export default function App() {
         fontFamily: "system-ui",
       }}
     >
-      <mod.Component />
+      <mod.Component key={runId} />
       <ReportButton />
     </div>
   );

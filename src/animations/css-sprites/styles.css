@@ -9,12 +9,12 @@
 }
 
 .calm-bird {
-  animation: sway 2.2s ease-in-out infinite;
+  animation: sway 3.6s ease-in-out infinite;
   transform-origin: 50% 100%;
 }
 @keyframes sway {
-  0%, 100% { transform: rotate(-3deg) translateY(0); }
-  50%      { transform: rotate(3deg)  translateY(-6px); }
+  0%, 100% { transform: rotate(-1.5deg); }
+  50%      { transform: rotate(1.5deg); }
 }
 
 .intruder {
