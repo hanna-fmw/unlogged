@@ -13,6 +13,7 @@ use tauri::{App, AppHandle};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 const MENU_TRIGGER: &str = "trigger";
+const MENU_SETTINGS: &str = "settings";
 const MENU_QUIT: &str = "quit";
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -51,13 +52,17 @@ pub fn run() {
 
 fn setup_tray(app: &mut App) -> tauri::Result<()> {
     let trigger = MenuItem::with_id(app, MENU_TRIGGER, "Trigger now", true, None::<&str>)?;
+    let settings = MenuItem::with_id(app, MENU_SETTINGS, "Harvest credentials…", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, MENU_QUIT, "Quit", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&trigger, &quit])?;
+    let menu = Menu::with_items(app, &[&trigger, &settings, &quit])?;
 
-    TrayIconBuilder::new()
+    let mut builder = TrayIconBuilder::new()
         .menu(&menu)
-        .on_menu_event(handle_menu_event)
-        .build(app)?;
+        .on_menu_event(handle_menu_event);
+    if let Some(icon) = app.default_window_icon().cloned() {
+        builder = builder.icon(icon).icon_as_template(true);
+    }
+    builder.build(app)?;
     Ok(())
 }
 
@@ -103,10 +108,17 @@ fn setup_scheduled(app: &mut App) {
 }
 
 fn handle_menu_event(app: &AppHandle, event: tauri::menu::MenuEvent) {
+    use tauri::Manager;
     match event.id.as_ref() {
         MENU_TRIGGER => {
             if let Err(e) = overlay::show_overlay(app) {
                 eprintln!("show_overlay failed: {e}");
+            }
+        }
+        MENU_SETTINGS => {
+            if let Some(win) = app.get_webview_window("settings") {
+                let _ = win.show();
+                let _ = win.set_focus();
             }
         }
         MENU_QUIT => {

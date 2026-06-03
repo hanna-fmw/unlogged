@@ -13,11 +13,14 @@
     "macOSPrivateApi": true,
     "windows": [
       {
-        "label": "main",
-        "title": "Time Report Reminder",
+        "label": "settings",
+        "title": "Harvest credentials",
+        "url": "index.html?view=settings",
         "visible": false,
-        "width": 400,
-        "height": 200
+        "width": 460,
+        "height": 280,
+        "resizable": false,
+        "skipTaskbar": true
       },
       {
         "label": "overlay",
