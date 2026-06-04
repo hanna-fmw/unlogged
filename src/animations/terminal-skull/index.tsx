@@ -32,7 +32,7 @@ function TerminalSkullAnimation({ onSequenceComplete }: { onSequenceComplete?: (
         : days === 0
           ? "0"
           : String(days);
-  const headerText = `> INTRUSION DETECTED: ${daysLabel} UNLOGGED DAYS`;
+  const headerText = `> INTRUSION DETECTED - UNLOGGED HOURS: ${daysLabel}`;
   const footerText = "> ACTION REQUIRED: REPORT IMMEDIATELY";
 
   const onReport = () =>
@@ -71,6 +71,7 @@ function TerminalSkullAnimation({ onSequenceComplete }: { onSequenceComplete?: (
         className="terminal-report-btn"
         onClick={onReport}
         disabled={phase !== "button" && phase !== "done"}
+        style={{ visibility: phase === "button" || phase === "done" ? "visible" : "hidden" }}
       >
         {phase === "button" ? (
           <Typewriter
@@ -82,11 +83,16 @@ function TerminalSkullAnimation({ onSequenceComplete }: { onSequenceComplete?: (
         ) : phase === "done" ? (
           <span>[ REPORT TIME → ]</span>
         ) : (
-          <span>&nbsp;</span>
+          <span>[ REPORT TIME → ]</span>
         )}
       </button>
 
-      <button type="button" className="terminal-snooze-btn" onClick={() => void snooze().catch(console.error)}>
+      <button
+        type="button"
+        className="terminal-snooze-btn"
+        onClick={() => void snooze().catch(console.error)}
+        style={{ visibility: phase === "done" ? "visible" : "hidden" }}
+      >
         [ snooze 15m ]
       </button>
 

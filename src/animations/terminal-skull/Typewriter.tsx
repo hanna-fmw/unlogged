@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface TypewriterProps {
   text: string;
@@ -20,6 +20,8 @@ export default function Typewriter({
   style,
 }: TypewriterProps) {
   const [shown, setShown] = useState(0);
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
 
   useEffect(() => {
     setShown(0);
@@ -31,7 +33,7 @@ export default function Typewriter({
         if (cancelled) return;
         setShown(i);
         if (i >= text.length) {
-          onDone?.();
+          onDoneRef.current?.();
           return;
         }
         timer = setTimeout(() => tick(i + 1), charDelayMs);
@@ -44,7 +46,7 @@ export default function Typewriter({
       clearTimeout(startTimer);
       clearTimeout(timer);
     };
-  }, [text, startDelayMs, charDelayMs, onDone]);
+  }, [text, startDelayMs, charDelayMs]);
 
   return (
     <span className={className} style={style}>

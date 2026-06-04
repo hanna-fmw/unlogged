@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SKULL } from "./skull";
 
 interface Props {
@@ -9,6 +9,8 @@ interface Props {
 
 export default function SkullReveal({ startDelayMs = 0, charDelayMs = 3, onDone }: Props) {
   const [shown, setShown] = useState(0);
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
 
   useEffect(() => {
     setShown(0);
@@ -20,7 +22,7 @@ export default function SkullReveal({ startDelayMs = 0, charDelayMs = 3, onDone 
         if (cancelled) return;
         setShown(i);
         if (i >= SKULL.length) {
-          onDone?.();
+          onDoneRef.current?.();
           return;
         }
         timer = setTimeout(() => tick(i + 1), charDelayMs);
@@ -33,7 +35,7 @@ export default function SkullReveal({ startDelayMs = 0, charDelayMs = 3, onDone 
       clearTimeout(startTimer);
       clearTimeout(timer);
     };
-  }, [startDelayMs, charDelayMs, onDone]);
+  }, [startDelayMs, charDelayMs]);
 
   return <pre className="skull">{SKULL.slice(0, shown)}</pre>;
 }
