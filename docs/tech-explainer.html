@@ -75,7 +75,7 @@
 <h2>Why Rust + WebView for this</h2>
 <p>Three reasons that mattered for this app:</p>
 <ol>
-  <li><strong>Native bits that a browser can't do.</strong> Global keyboard shortcut, a real macOS menu-bar tray icon, "always on top + fullscreen + transparent" window with the real OS frosted-glass background. All of these are AppKit calls. Rust talks to AppKit through the <code>objc</code> crate; the Tauri ecosystem wraps the common ones (<code>window-vibrancy</code>, <code>tauri-plugin-global-shortcut</code>).</li>
+  <li><strong>Native bits that a browser can't do.</strong> Global keyboard shortcut, a real macOS menu-bar tray icon, an "always on top + fullscreen + transparent + decoration-less" window. All of these are AppKit calls. Rust talks to AppKit through the <code>objc</code> crate; the Tauri ecosystem wraps the common ones (<code>window-vibrancy</code>, <code>tauri-plugin-global-shortcut</code>).</li>
   <li><strong>Small distributable.</strong> A 15 MB app that idles at near-zero CPU is more honest for a thing you install just so it can yell at you on Fridays.</li>
   <li><strong>Type-safe IPC.</strong> Every function the UI calls into Rust is declared with <code>#[tauri::command]</code> and typed on both sides. No hand-rolled JSON message bus.</li>
 </ol>
@@ -84,9 +84,15 @@
 <p>A LaunchAgent is a per-user background task that macOS's <code>launchd</code> (the init system that boots and supervises everything) runs on a schedule or in response to events. It's the modern replacement for cron on macOS.</p>
 <p>The unit of configuration is a <code>.plist</code> file in <code>~/Library/LaunchAgents/</code>. Ours uses <code>StartCalendarInterval</code> (cron-style: "Weekday 5, Hour 16, Minute 45") to fire the binary every Friday afternoon with <code>--scheduled</code>. <code>launchctl load &lt;path&gt;</code> registers it; <code>launchctl unload &lt;path&gt;</code> removes it. The system survives reboots and logouts.</p>
 
-<h2>How macOS vibrancy works</h2>
-<p>The frosted-glass blur behind the overlay isn't a CSS filter — it's the actual <code>NSVisualEffectView</code> from AppKit, the same one Finder and System Settings use. macOS itself blurs whatever is behind the window in real time. We just declare which "material" we want (HudWindow, Sidebar, etc.) and the compositor handles it on the GPU.</p>
-<p>In Rust we call into AppKit via the <code>window-vibrancy</code> crate, which wraps the <code>objc</code> bindings. It needs two things wired up: the <code>macos-private-api</code> Cargo feature on the <code>tauri</code> crate, and <code>"macOSPrivateApi": true</code> in <code>tauri.conf.json</code>. Without the JSON flag the transparent window silently fails to be created.</p>
+<h2>How the overlay window is built</h2>
+<p>The fullscreen overlay is a native macOS window: transparent, always-on-top, no decorations, no shadow, fullscreen. Set up declaratively in <code>tauri.conf.json</code> plus a small Rust call in <code>overlay.rs</code> that applies <code>NSVisualEffectView</code> to the window via the <code>window-vibrancy</code> crate (which wraps the <code>objc</code> AppKit bindings).</p>
+<p>That gives us <strong>two visual modes</strong> the animation can opt into:</p>
+<ul>
+  <li><strong>Frosted glass</strong> — the OS's real <code>NSVisualEffectView</code> blur of whatever is behind the window. The same blur Finder and System Settings use; macOS blurs in real time on the GPU. Earlier animations (the placeholder bird scene, the emergency siren) use this.</li>
+  <li><strong>Solid black</strong> — when the animation wants its own backdrop. The current terminal-skull animation uses this — the green-on-black hacker look needs a pure black canvas.</li>
+</ul>
+<p>Each animation module declares its preference via <code>backdrop: "frosted" | "black"</code>, and <code>App.tsx</code> applies the matching CSS. The native window itself is the same either way; the animation paints over it.</p>
+<p>The transparency setup has one easy-to-miss gotcha: it needs both the <code>macos-private-api</code> Cargo feature on the <code>tauri</code> crate <strong>and</strong> <code>"macOSPrivateApi": true</code> in <code>tauri.conf.json</code>. Without the JSON flag the transparent window silently fails to be created.</p>
 
 <h2>Harvest API call</h2>
 <p>Two GET requests, both with two auth headers. First we fetch the user's numeric ID, because Harvest's <code>user_id=me</code> shorthand doesn't actually work — it silently returns zero entries. Then we pull this month's time entries:</p>

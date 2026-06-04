@@ -12,7 +12,7 @@ Compare to Electron: Electron ships an entire copy of Chromium with every app, w
 
 Three reasons that mattered for this app:
 
-1. **Native bits that a browser can't do.** Global keyboard shortcut, a real macOS menu-bar tray icon, "always on top + fullscreen + transparent" window with the real OS frosted-glass background. All of these are AppKit calls. Rust talks to AppKit through the `objc` crate; the Tauri ecosystem wraps the common ones (`window-vibrancy`, `tauri-plugin-global-shortcut`).
+1. **Native bits that a browser can't do.** Global keyboard shortcut, a real macOS menu-bar tray icon, an "always on top + fullscreen + transparent + decoration-less" window. All of these are AppKit calls. Rust talks to AppKit through the `objc` crate; the Tauri ecosystem wraps the common ones (`window-vibrancy`, `tauri-plugin-global-shortcut`).
 2. **Small distributable.** A 15 MB app that idles at near-zero CPU is more honest for a thing you install just so it can yell at you on Fridays.
 3. **Type-safe IPC.** Every function the UI calls into Rust is declared with `#[tauri::command]` and typed on both sides. No hand-rolled JSON message bus.
 
@@ -22,11 +22,18 @@ A LaunchAgent is a per-user background task that macOS's `launchd` (the init sys
 
 The unit of configuration is a `.plist` file in `~/Library/LaunchAgents/`. Ours uses `StartCalendarInterval` (cron-style: "Weekday 5, Hour 16, Minute 45") to fire the binary every Friday afternoon with `--scheduled`. `launchctl load <path>` registers it; `launchctl unload <path>` removes it. The system survives reboots and logouts.
 
-## How macOS vibrancy works
+## How the overlay window is built
 
-The frosted-glass blur behind the overlay isn't a CSS filter — it's the actual `NSVisualEffectView` from AppKit, the same one Finder and System Settings use. macOS itself blurs whatever is behind the window in real time. We just declare which "material" we want (HudWindow, Sidebar, etc.) and the compositor handles it on the GPU.
+The fullscreen overlay is a native macOS window: transparent, always-on-top, no decorations, no shadow, fullscreen. Set up declaratively in `tauri.conf.json` plus a small Rust call in `overlay.rs` that applies `NSVisualEffectView` to the window via the `window-vibrancy` crate (which wraps the `objc` AppKit bindings).
 
-In Rust we call into AppKit via the `window-vibrancy` crate, which wraps the `objc` bindings. It needs two things wired up: the `macos-private-api` Cargo feature on the `tauri` crate, and `"macOSPrivateApi": true` in `tauri.conf.json`. Without the JSON flag the transparent window silently fails to be created.
+That gives us **two visual modes** the animation can opt into:
+
+- **Frosted glass** — the OS's real `NSVisualEffectView` blur of whatever is behind the window. The same blur Finder and System Settings use; macOS blurs in real time on the GPU. Earlier animations (the placeholder bird scene, the emergency siren) use this.
+- **Solid black** — when the animation wants its own backdrop. The current terminal-skull animation uses this — the green-on-black hacker look needs a pure black canvas.
+
+Each animation module declares its preference via `backdrop: "frosted" | "black"`, and `App.tsx` applies the matching CSS. The native window itself is the same either way; the animation paints over it.
+
+The transparency setup has one easy-to-miss gotcha: it needs both the `macos-private-api` Cargo feature on the `tauri` crate **and** `"macOSPrivateApi": true` in `tauri.conf.json`. Without the JSON flag the transparent window silently fails to be created.
 
 ## Harvest API call
 
