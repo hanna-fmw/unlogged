@@ -35,3 +35,7 @@ src-tauri/gen/
 CLAUDE.md
 .claude/
 CLEAN-SLATE.md
+
+# Docs — local notes only, except the README screenshot
+docs/*
+!docs/screenshot.png
