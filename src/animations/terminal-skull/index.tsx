@@ -32,7 +32,7 @@ function TerminalSkullAnimation({ onSequenceComplete }: { onSequenceComplete?: (
         : days === 0
           ? "0"
           : String(days);
-  const headerText = `> INTRUSION DETECTED - UNLOGGED HOURS: ${daysLabel}`;
+  const headerText = `> INTRUSION DETECTED - UNLOGGED DAYS: ${daysLabel}`;
   const footerText = "> ACTION REQUIRED: REPORT IMMEDIATELY";
 
   const onReport = () =>

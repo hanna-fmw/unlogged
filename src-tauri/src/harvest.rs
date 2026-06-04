@@ -13,6 +13,11 @@ struct TimeEntriesResponse {
     time_entries: Vec<TimeEntry>,
 }
 
+#[derive(Debug, Deserialize)]
+struct UserMeResponse {
+    id: u64,
+}
+
 pub struct HarvestClient {
     token: String,
     account_id: String,
@@ -24,13 +29,33 @@ impl HarvestClient {
         Self { token, account_id, http: reqwest::Client::new() }
     }
 
+    async fn me_id(&self) -> Result<u64, String> {
+        let resp = self
+            .http
+            .get("https://api.harvestapp.com/v2/users/me")
+            .bearer_auth(&self.token)
+            .header("Harvest-Account-ID", &self.account_id)
+            .header("User-Agent", "TimeReportReminder (noreply@example.com)")
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if !resp.status().is_success() {
+            return Err(format!("Harvest /users/me: {}", resp.status()));
+        }
+
+        let body: UserMeResponse = resp.json().await.map_err(|e| e.to_string())?;
+        Ok(body.id)
+    }
+
     pub async fn missing_weekdays_this_month(&self) -> Result<u32, String> {
         let today = Utc::now().date_naive();
         let month_start = NaiveDate::from_ymd_opt(today.year(), today.month(), 1).unwrap();
+        let user_id = self.me_id().await?;
 
         let url = format!(
-            "https://api.harvestapp.com/v2/time_entries?user_id=me&from={}&to={}",
-            month_start, today
+            "https://api.harvestapp.com/v2/time_entries?user_id={}&from={}&to={}&per_page=2000",
+            user_id, month_start, today
         );
 
         let resp = self
