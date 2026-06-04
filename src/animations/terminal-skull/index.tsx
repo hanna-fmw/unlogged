@@ -24,14 +24,10 @@ function TerminalSkullAnimation({ onSequenceComplete }: { onSequenceComplete?: (
     if (phase === "done") onSequenceComplete?.();
   }, [phase, onSequenceComplete]);
 
-  const daysLabel =
-    daysErr !== null
-      ? "??"
-      : days === null
-        ? "..."
-        : days === 0
-          ? "0"
-          : String(days);
+  // Wait for the count before computing headerText, otherwise the async
+  // resolution changes the Typewriter's text prop mid-type and restarts it.
+  const daysReady = days !== null || daysErr !== null;
+  const daysLabel = daysErr !== null ? "??" : String(days ?? 0);
   const headerText = `> INTRUSION DETECTED - UNLOGGED DAYS: ${daysLabel}`;
   const footerText = "> ACTION REQUIRED: REPORT IMMEDIATELY";
 
@@ -41,7 +37,9 @@ function TerminalSkullAnimation({ onSequenceComplete }: { onSequenceComplete?: (
   return (
     <div className="terminal-stage">
       <div className="terminal-line terminal-line-header">
-        {phase === "header" ? (
+        {!daysReady ? (
+          " "
+        ) : phase === "header" ? (
           <Typewriter text={headerText} charDelayMs={35} onDone={() => setPhase("skull")} />
         ) : (
           <span>{headerText}</span>
