@@ -35,7 +35,7 @@ impl HarvestClient {
             .get("https://api.harvestapp.com/v2/users/me")
             .bearer_auth(&self.token)
             .header("Harvest-Account-ID", &self.account_id)
-            .header("User-Agent", "TimeReportReminder (noreply@example.com)")
+            .header("User-Agent", "Unlogged/1.0 (https://github.com/hanna-fmw/unlogged)")
             .send()
             .await
             .map_err(|e| e.to_string())?;
@@ -63,7 +63,7 @@ impl HarvestClient {
             .get(&url)
             .bearer_auth(&self.token)
             .header("Harvest-Account-ID", &self.account_id)
-            .header("User-Agent", "TimeReportReminder (noreply@example.com)")
+            .header("User-Agent", "Unlogged/1.0 (https://github.com/hanna-fmw/unlogged)")
             .send()
             .await
             .map_err(|e| e.to_string())?;
