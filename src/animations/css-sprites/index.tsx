@@ -21,10 +21,17 @@ function CssSpritesAnimation({ onSequenceComplete }: { onSequenceComplete?: () =
 
   return (
     <div className={`stage ${dance ? "dance" : ""}`}>
-      <CalmBird delayMs={0} />
-      <CalmBird delayMs={600} />
-      <CalmBird delayMs={1200} />
-      <Intruder />
+      <div className="bird-pair">
+        <CalmBird delayMs={0} />
+        <CalmBird delayMs={600} />
+      </div>
+      <div className="intruder-slot">
+        <Intruder />
+      </div>
+      <div className="bird-pair">
+        <CalmBird delayMs={1200} />
+        <CalmBird delayMs={1800} />
+      </div>
     </div>
   );
 }

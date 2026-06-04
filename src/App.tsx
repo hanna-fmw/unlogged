@@ -40,14 +40,21 @@ export default function App() {
     };
   }, []);
 
+  const backdropStyles =
+    mod.backdrop === "black"
+      ? { background: "#000" }
+      : {
+          backdropFilter: "blur(20px) saturate(160%)",
+          WebkitBackdropFilter: "blur(20px) saturate(160%)",
+          background: "rgba(255,255,255,0.18)",
+        };
+
   return (
     <div
       style={{
         position: "fixed",
         inset: 0,
-        backdropFilter: "blur(20px) saturate(160%)",
-        WebkitBackdropFilter: "blur(20px) saturate(160%)",
-        background: "rgba(255,255,255,0.18)",
+        ...backdropStyles,
         display: "grid",
         gridTemplateRows: "auto 1fr auto",
         placeItems: "center",
@@ -56,12 +63,14 @@ export default function App() {
         fontFamily: "system-ui",
       }}
     >
-      <MissingCounter key={`counter-${runId}`} />
+      {!mod.ownsChrome && <MissingCounter key={`counter-${runId}`} />}
       <mod.Component key={`anim-${runId}`} />
-      <div style={{ display: "grid", placeItems: "center", gap: 12 }}>
-        <ReportButton />
-        <SnoozeButton />
-      </div>
+      {!mod.ownsChrome && (
+        <div style={{ display: "grid", placeItems: "center", gap: 12 }}>
+          <ReportButton />
+          <SnoozeButton />
+        </div>
+      )}
     </div>
   );
 }

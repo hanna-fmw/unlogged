@@ -1,5 +1,5 @@
 {
-  "animation": "css-sprites",
+  "animation": "terminal-skull",
   "audio": {
     "calm": "/src/audio/calm.mp3",
     "annoying": "/src/audio/annoying.mp3",

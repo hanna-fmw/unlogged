@@ -1,0 +1,103 @@
+.terminal-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  font-family: "Menlo", "SF Mono", "JetBrains Mono", monospace;
+  color: #33ff66;
+  text-shadow: 0 0 6px rgba(51, 255, 102, 0.6), 0 0 14px rgba(51, 255, 102, 0.3);
+}
+
+.terminal-line {
+  font-size: 22px;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  white-space: pre;
+}
+.terminal-line-header { min-height: 1.2em; }
+.terminal-line-footer { min-height: 1.2em; }
+
+.skull {
+  font-size: 12px;
+  line-height: 1.05;
+  margin: 0;
+  white-space: pre;
+  color: #33ff66;
+  text-shadow: 0 0 4px rgba(51, 255, 102, 0.8), 0 0 12px rgba(51, 255, 102, 0.4);
+  min-height: 26em;
+}
+
+.cursor {
+  display: inline-block;
+  margin-left: 2px;
+  animation: blink 0.9s steps(2, end) infinite;
+}
+@keyframes blink {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.terminal-report-btn {
+  background: transparent;
+  border: 2px solid #33ff66;
+  color: #33ff66;
+  font-family: inherit;
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 18px 36px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-shadow: 0 0 10px rgba(51, 255, 102, 0.8), 0 0 24px rgba(51, 255, 102, 0.5);
+  box-shadow: 0 0 14px rgba(51, 255, 102, 0.4), inset 0 0 14px rgba(51, 255, 102, 0.15);
+  transition: background 0.1s, transform 0.05s;
+  min-width: 12em;
+  min-height: 1.4em;
+}
+.terminal-report-btn:not(:disabled):hover {
+  background: rgba(51, 255, 102, 0.12);
+}
+.terminal-report-btn:not(:disabled):active {
+  transform: translateY(1px);
+}
+.terminal-report-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.terminal-snooze-btn {
+  background: transparent;
+  border: 1px solid rgba(51, 255, 102, 0.5);
+  color: rgba(51, 255, 102, 0.75);
+  font-family: inherit;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  padding: 6px 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  text-shadow: 0 0 4px rgba(51, 255, 102, 0.5);
+}
+.terminal-snooze-btn:hover {
+  background: rgba(51, 255, 102, 0.08);
+  color: #33ff66;
+}
+
+/* Scanline overlay for full CRT feel. */
+.terminal-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(0, 0, 0, 0.25) 3px,
+    rgba(0, 0, 0, 0) 4px
+  );
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  z-index: 1;
+}
