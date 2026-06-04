@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Unlogged — Walkthrough</title>
+<style>
+  :root {
+    --fg: #1a1a1a;
+    --muted: #5a5a5a;
+    --accent: #15803d;
+    --rule: #e5e5e5;
+    --plain-bg: #f4f6f4;
+    --code-bg: #f0f0f0;
+  }
+  html, body { margin: 0; padding: 0; background: #fafafa; color: var(--fg); }
+  body {
+    font: 17px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 56px 32px 96px;
+  }
+  h1 {
+    font-size: 30px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 15px;
+    margin: 0 0 32px;
+  }
+  h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 40px 0 8px;
+    letter-spacing: -0.005em;
+  }
+  hr {
+    border: 0;
+    border-top: 1px solid var(--rule);
+    margin: 32px 0;
+  }
+  p { margin: 0 0 14px; }
+  .beat {
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .quote {
+    border-left: 3px solid var(--accent);
+    background: #fff;
+    padding: 10px 16px;
+    margin: 0 0 18px;
+    color: var(--fg);
+    font-style: italic;
+    border-radius: 0 4px 4px 0;
+  }
+  .plain {
+    background: var(--plain-bg);
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin: -6px 0 18px;
+    color: #2a4a35;
+    font-size: 15px;
+  }
+  .plain::before {
+    content: "Plain English: ";
+    font-weight: 600;
+    color: var(--accent);
+  }
+  code {
+    font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+    background: var(--code-bg);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 14px;
+  }
+  ul { padding-left: 22px; }
+  ul li { margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<h1>Unlogged — Walkthrough</h1>
+<p class="subtitle">A 4-minute talk track. Tech bits are paired with a plain-English version so the room stays with you.</p>
+
+<hr>
+
+<p><span class="beat">Open.</span> "I built a small Mac app that nags me on Fridays to log my hours in Harvest. It refuses to be ignored. Let me show you."</p>
+
+<p><span class="beat">Trigger.</span> Press <code>Cmd+Shift+H</code>. The screen goes black, a green terminal-style line types itself in: <code>&gt; INTRUSION DETECTED - UNLOGGED DAYS: 4</code>. An ASCII skull builds character by character. A glowing <code>[ REPORT TIME → ]</code> button types in. You can either click it (opens Harvest), snooze 15 minutes, or — if you're disciplined — escape and ignore me.</p>
+
+<p class="quote">"The whole thing is a fullscreen window that sits on top of everything else, and the count is live — it's actually asking Harvest how many days this month I'm under 8 hours."</p>
+
+<p><span class="beat">Why Tauri, not Electron.</span> Tauri is a framework that lets me write the UI as a regular web app (React) but ship the shell as a tiny Rust binary that uses the Mac's own browser engine. Electron bundles a whole copy of Chrome with every app — that's why Slack is 300 MB. This app is 15 MB and uses no measurable CPU when it's not yelling at me.</p>
+
+<p class="plain">instead of every app shipping its own browser to draw the screen, this one borrows the browser that's already on your Mac.</p>
+
+<p><span class="beat">The schedule.</span> Every Friday at 16:45 a LaunchAgent fires the app. LaunchAgent is macOS's modern version of cron — a small XML file in <code>~/Library/LaunchAgents/</code> that tells the OS "run this binary at this time." When it fires, the app checks three things before showing the overlay: am I in a meeting (is Zoom or Teams the frontmost app on screen?), have I snoozed it, and is there actually anything missing in Harvest? Only if all three are no does it take over the screen.</p>
+
+<p class="plain">it's polite. If you're in a meeting it stays quiet. If you've already logged your hours, it stays quiet.</p>
+
+<p><span class="beat">The Harvest part.</span> One web request goes out to Harvest's API with my token, comes back with every time entry for this month, the Rust code groups them by day and counts the weekdays that have less than 8 hours. That's the number you see at the top.</p>
+
+<p class="plain">it just asks Harvest the same question their own website asks — "how many hours did Hanna log this month?" — and counts the gaps.</p>
+
+<p><span class="beat">The animation seam.</span> Each animation — the terminal skull, an earlier emergency-siren version, a placeholder one with birds — is a separate plug-in folder. Swapping the active one is a one-line config change. The whole point of building the boring plumbing first was so I could iterate on the creative content without touching the wiring underneath.</p>
+
+<p class="plain">the "what does it look like" part and the "how does it work" part are kept apart, so I can change one without breaking the other.</p>
+
+<p><span class="beat">Wrap.</span> "Open source on my GitHub. It's Harvest-only today but the architecture allows any time-tracker. If you steal the schedule-plus-meeting-detection pattern for something else, that's the most useful 200 lines of Rust in the repo."</p>
+
+<hr>
+
+<h2>If you've got an extra minute</h2>
+<p>What's not done yet, in honesty order:</p>
+<ul>
+  <li>The audio is a synthesized siren placeholder. Real audio is coming, generated in Suno.</li>
+  <li>"Are you in a meeting" currently checks the app on top of your screen. A proper check would ask the OS "is anything actually using the camera or microphone right now?" which catches a Zoom call you've left running in the background.</li>
+  <li>The app is ad-hoc signed, which means the first time you open it Mac asks "are you sure?". A properly notarised build would skip that. Apple Developer membership costs $99/year, which I'm not going to pay for a single-user nag app.</li>
+</ul>
+
+</body>
+</html>

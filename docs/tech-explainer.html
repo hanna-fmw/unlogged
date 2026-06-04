@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Unlogged — Tech Explainer</title>
+<style>
+  :root {
+    --fg: #1a1a1a;
+    --muted: #5a5a5a;
+    --accent: #15803d;
+    --rule: #e5e5e5;
+    --code-bg: #f0f0f0;
+    --block-bg: #1a1a1a;
+    --block-fg: #f5f5f5;
+  }
+  html, body { margin: 0; padding: 0; background: #fafafa; color: var(--fg); }
+  body {
+    font: 17px/1.65 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 56px 32px 96px;
+  }
+  h1 {
+    font-size: 30px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 15px;
+    margin: 0 0 32px;
+  }
+  h2 {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 44px 0 12px;
+    letter-spacing: -0.005em;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 6px;
+  }
+  p { margin: 0 0 14px; }
+  code {
+    font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+    background: var(--code-bg);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 14px;
+  }
+  pre {
+    background: var(--block-bg);
+    color: var(--block-fg);
+    padding: 14px 16px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font: 13px/1.5 "SF Mono", Menlo, Monaco, Consolas, monospace;
+    margin: 0 0 18px;
+  }
+  pre code { background: transparent; padding: 0; font-size: 13px; color: inherit; }
+  ol, ul { padding-left: 22px; }
+  ol li, ul li { margin-bottom: 8px; }
+  strong { font-weight: 600; }
+</style>
+</head>
+<body>
+
+<h1>Unlogged — Tech Explainer</h1>
+<p class="subtitle">A short tour of the moving parts, written so I can talk through it without notes.</p>
+
+<h2>What is Tauri</h2>
+<p>Tauri is a way to ship a desktop app where the UI is a regular web app (HTML/CSS/JS, in our case React) and the "shell" — the window, the tray icon, the global shortcut, the file I/O — is a small Rust binary. On macOS the UI runs inside <code>WKWebView</code>, which is the same Safari rendering engine that the OS already ships. So we don't bundle a browser.</p>
+<p>Compare to Electron: Electron ships an entire copy of Chromium with every app, which is why an Electron app weighs ~150 MB before you write a single line of code. A Tauri app weighs ~5–15 MB because the webview is borrowed from the operating system. The trade-off is that you only have the features the OS webview supports — on macOS that means Safari, with all its quirks.</p>
+
+<h2>Why Rust + WebView for this</h2>
+<p>Three reasons that mattered for this app:</p>
+<ol>
+  <li><strong>Native bits that a browser can't do.</strong> Global keyboard shortcut, a real macOS menu-bar tray icon, "always on top + fullscreen + transparent" window with the real OS frosted-glass background. All of these are AppKit calls. Rust talks to AppKit through the <code>objc</code> crate; the Tauri ecosystem wraps the common ones (<code>window-vibrancy</code>, <code>tauri-plugin-global-shortcut</code>).</li>
+  <li><strong>Small distributable.</strong> A 15 MB app that idles at near-zero CPU is more honest for a thing you install just so it can yell at you on Fridays.</li>
+  <li><strong>Type-safe IPC.</strong> Every function the UI calls into Rust is declared with <code>#[tauri::command]</code> and typed on both sides. No hand-rolled JSON message bus.</li>
+</ol>
+
+<h2>What's a LaunchAgent</h2>
+<p>A LaunchAgent is a per-user background task that macOS's <code>launchd</code> (the init system that boots and supervises everything) runs on a schedule or in response to events. It's the modern replacement for cron on macOS.</p>
+<p>The unit of configuration is a <code>.plist</code> file in <code>~/Library/LaunchAgents/</code>. Ours uses <code>StartCalendarInterval</code> (cron-style: "Weekday 5, Hour 16, Minute 45") to fire the binary every Friday afternoon with <code>--scheduled</code>. <code>launchctl load &lt;path&gt;</code> registers it; <code>launchctl unload &lt;path&gt;</code> removes it. The system survives reboots and logouts.</p>
+
+<h2>How macOS vibrancy works</h2>
+<p>The frosted-glass blur behind the overlay isn't a CSS filter — it's the actual <code>NSVisualEffectView</code> from AppKit, the same one Finder and System Settings use. macOS itself blurs whatever is behind the window in real time. We just declare which "material" we want (HudWindow, Sidebar, etc.) and the compositor handles it on the GPU.</p>
+<p>In Rust we call into AppKit via the <code>window-vibrancy</code> crate, which wraps the <code>objc</code> bindings. It needs two things wired up: the <code>macos-private-api</code> Cargo feature on the <code>tauri</code> crate, and <code>"macOSPrivateApi": true</code> in <code>tauri.conf.json</code>. Without the JSON flag the transparent window silently fails to be created.</p>
+
+<h2>Harvest API call</h2>
+<p>Two GET requests, both with two auth headers. First we fetch the user's numeric ID, because Harvest's <code>user_id=me</code> shorthand doesn't actually work — it silently returns zero entries. Then we pull this month's time entries:</p>
+<pre><code>GET /v2/users/me
+GET /v2/time_entries?user_id=&lt;id&gt;&from=&lt;month_start&gt;&to=&lt;today&gt;&per_page=2000
+Authorization: Bearer &lt;PAT&gt;
+Harvest-Account-ID: &lt;account_id&gt;</code></pre>
+<p>Harvest returns every time entry as <code>{ spent_date, hours }</code>. The "missing weekdays" math runs in Rust on the response: sum hours by date, walk Mon–Fri from the first of the month to today, count any weekday where total hours &lt; 8. Weekends never count. That number is what the counter at the top of the overlay shows.</p>
+<p>The PAT and account ID live in <code>~/Library/Application Support/dev.unlogged/state.json</code> with <code>0600</code> permissions. Set via the tray menu → "Harvest credentials…".</p>
+
+<h2>Module-swap design</h2>
+<p>Animations are first-class. Each one is a folder under <code>src/animations/&lt;name&gt;/</code> exporting an <code>AnimationModule</code>:</p>
+<pre><code>export interface AnimationModule {
+  name: string;
+  Component: React.FC;
+  audio: { calm: string; annoying: string; switchAtMs: number };
+  backdrop?: "frosted" | "black";
+  ownsChrome?: boolean;
+}</code></pre>
+<p>A registry in <code>src/animations/index.ts</code> lists every available module. <code>assets-config.json</code> at the project root picks the active one by name. Drop a new folder, register it, change one config line, rebuild. No code in <code>App.tsx</code> changes.</p>
+<p>This is the seam where the actual creative work happens. The current animation (terminal-skull) and earlier ones (siren, css-sprites birds) all live behind this interface. New ones — different aesthetics, real audio, AI-generated characters — slot in the same way.</p>
+
+<h2>What I'd build next</h2>
+<ul>
+  <li><strong>In-meeting detection beyond frontmost app.</strong> Right now <code>meeting.rs</code> looks at the frontmost AppleScript process name. A real check would use AVFoundation to ask "is anything currently using the camera or microphone?" — that catches a Zoom call running in the background. Requires TCC (Transparency Consent Control) permission, which is its own onboarding flow.</li>
+  <li><strong>macOS Focus / Do Not Disturb integration.</strong> Skip the trigger automatically when Focus is on.</li>
+  <li><strong>Developer ID signing + notarisation.</strong> Currently the app is ad-hoc signed, so first launch needs a right-click-Open. A real signed-and-notarised build opens normally.</li>
+  <li><strong>Configurable schedule from the settings window</strong> instead of editing the plist.</li>
+  <li><strong>AI-generated character video</strong> as one of the animation modules — the module interface is ready for it.</li>
+</ul>
+
+</body>
+</html>

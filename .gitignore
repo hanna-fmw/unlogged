@@ -36,6 +36,10 @@ CLAUDE.md
 .claude/
 CLEAN-SLATE.md
 
-# Docs — local notes only, except the README screenshot
+# Docs — local notes only, except the README screenshot and public explainers
 docs/*
 !docs/screenshot.png
+!docs/walkthrough.md
+!docs/walkthrough.html
+!docs/tech-explainer.md
+!docs/tech-explainer.html
