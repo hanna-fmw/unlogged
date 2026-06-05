@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { flushSync } from "react-dom";
+import { listen } from "@tauri-apps/api/event";
 import { getActiveAnimation } from "./animations";
 import { AudioController } from "./audio/AudioController";
 import { hideOverlay } from "./lib/tauri";
@@ -10,20 +12,29 @@ const mod = getActiveAnimation();
 
 export default function App() {
   const [runId, setRunId] = useState(0);
+  // Start hidden — Rust emits `overlay:will-show` BEFORE `win.show()`, so
+  // the first reveal flips this to true (and bumps runId) while the window
+  // is still off-screen, giving React a paint at the fresh initial state.
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const audio = new AudioController(mod.audio);
 
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") {
+    const unlistenShow = listen("overlay:will-show", () => {
+      // flushSync forces the remount to commit before Rust's `win.show()`
+      // returns, so the OS paints the initial DOM, never a stale frame.
+      flushSync(() => {
         setRunId((n) => n + 1);
-        audio.start();
-      } else {
-        audio.stop();
-      }
-    };
-    onVisibility();
-    document.addEventListener("visibilitychange", onVisibility);
+        setVisible(true);
+      });
+      audio.start();
+    });
+    const unlistenHide = listen("overlay:did-hide", () => {
+      audio.stop();
+      // Unmount kills child setTimeout chains so they can't keep ticking
+      // while the window is hidden.
+      setVisible(false);
+    });
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -34,7 +45,8 @@ export default function App() {
     window.addEventListener("keydown", onKey);
 
     return () => {
-      document.removeEventListener("visibilitychange", onVisibility);
+      void unlistenShow.then((fn) => fn());
+      void unlistenHide.then((fn) => fn());
       window.removeEventListener("keydown", onKey);
       audio.stop();
     };
@@ -63,9 +75,9 @@ export default function App() {
         fontFamily: "system-ui",
       }}
     >
-      {!mod.ownsChrome && <MissingCounter key={`counter-${runId}`} />}
-      <mod.Component key={`anim-${runId}`} />
-      {!mod.ownsChrome && (
+      {visible && !mod.ownsChrome && <MissingCounter key={`counter-${runId}`} />}
+      {visible && <mod.Component key={`anim-${runId}`} />}
+      {visible && !mod.ownsChrome && (
         <div style={{ display: "grid", placeItems: "center", gap: 12 }}>
           <ReportButton />
           <SnoozeButton />
