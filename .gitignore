@@ -43,3 +43,5 @@ docs/*
 !docs/walkthrough.html
 !docs/tech-explainer.md
 !docs/tech-explainer.html
+
+backstage/
