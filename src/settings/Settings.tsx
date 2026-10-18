@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { type FormEvent, useState } from "react";
 import { setHarvestCredentials } from "../lib/tauri";
 
 export default function Settings() {
@@ -42,6 +42,7 @@ export default function Settings() {
           value={token}
           onChange={(e) => setToken(e.target.value)}
           placeholder="4293764.pt.…"
+          // biome-ignore lint/a11y/noAutofocus: the settings window opens to fill in this one field
           autoFocus
           required
           style={inputStyle}

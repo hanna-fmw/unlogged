@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import type { AnimationModule } from "../types";
 import sirenUrl from "../../audio/siren.mp3?url";
+import type { AnimationModule } from "../types";
 import "./styles.css";
 
 function SirenAnimation({ onSequenceComplete }: { onSequenceComplete?: () => void }) {

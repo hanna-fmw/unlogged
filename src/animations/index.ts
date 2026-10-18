@@ -1,8 +1,8 @@
 import config from "../../assets-config.json";
-import type { AnimationModule } from "./types";
 import cssSprites from "./css-sprites";
 import siren from "./siren";
 import terminalSkull from "./terminal-skull";
+import type { AnimationModule } from "./types";
 
 const registry: Record<string, AnimationModule> = {
   "css-sprites": cssSprites,

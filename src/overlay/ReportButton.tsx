@@ -10,6 +10,7 @@ export default function ReportButton() {
 
   return (
     <button
+      type="button"
       onClick={onClick}
       style={{
         fontSize: 56,
