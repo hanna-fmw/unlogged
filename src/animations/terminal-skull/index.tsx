@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import type { AnimationModule } from "../types";
+import config from "../../../assets-config.json";
 import sirenUrl from "../../audio/siren.mp3?url";
 import { missingDays, reportTime, snooze } from "../../lib/tauri";
-import config from "../../../assets-config.json";
-import Typewriter from "./Typewriter";
+import type { AnimationModule } from "../types";
 import SkullReveal from "./SkullReveal";
+import Typewriter from "./Typewriter";
 import "./styles.css";
 
 type Phase = "header" | "skull" | "footer" | "button" | "done";
@@ -52,11 +52,7 @@ function TerminalSkullAnimation({ onSequenceComplete }: { onSequenceComplete?: (
 
       <div className="terminal-line terminal-line-footer">
         {phase === "footer" ? (
-          <Typewriter
-            text={footerText}
-            charDelayMs={35}
-            onDone={() => setPhase("button")}
-          />
+          <Typewriter text={footerText} charDelayMs={35} onDone={() => setPhase("button")} />
         ) : phase === "button" || phase === "done" ? (
           <span>{footerText}</span>
         ) : (

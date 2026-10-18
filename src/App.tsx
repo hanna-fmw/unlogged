@@ -1,11 +1,11 @@
+import { listen } from "@tauri-apps/api/event";
 import { useEffect, useState } from "react";
 import { flushSync } from "react-dom";
-import { listen } from "@tauri-apps/api/event";
 import { getActiveAnimation } from "./animations";
 import { AudioController } from "./audio/AudioController";
 import { hideOverlay } from "./lib/tauri";
-import ReportButton from "./overlay/ReportButton";
 import MissingCounter from "./overlay/MissingCounter";
+import ReportButton from "./overlay/ReportButton";
 import SnoozeButton from "./overlay/SnoozeButton";
 
 const mod = getActiveAnimation();

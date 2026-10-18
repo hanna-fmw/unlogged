@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
+import annoyingUrl from "../../audio/annoying.mp3?url";
+import calmUrl from "../../audio/calm.mp3?url";
 import type { AnimationModule } from "../types";
 import CalmBird from "./CalmBird";
 import Intruder from "./Intruder";
-import calmUrl from "../../audio/calm.mp3?url";
-import annoyingUrl from "../../audio/annoying.mp3?url";
 import "./styles.css";
 
 const SWITCH_MS = 2500;

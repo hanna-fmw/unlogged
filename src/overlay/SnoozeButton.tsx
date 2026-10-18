@@ -3,6 +3,7 @@ import { snooze } from "../lib/tauri";
 export default function SnoozeButton() {
   return (
     <button
+      type="button"
       onClick={() => void snooze().catch(console.error)}
       style={{
         background: "transparent",
