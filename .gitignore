@@ -38,6 +38,7 @@ CLEAN-SLATE.md
 
 # Docs — local notes only, except the README screenshot and public explainers
 docs/*
+!docs/todo.md
 !docs/screenshot.png
 !docs/walkthrough.md
 !docs/walkthrough.html
